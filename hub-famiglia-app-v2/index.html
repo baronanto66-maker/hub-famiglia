@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Hub di Famiglia</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6b9d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hub Famiglia">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{
+    --pink:#ff6b9d; --orange:#ffb347; --green:#4ecb71; --blue:#4a90d9;
+    --purple:#6c5ce7; --bg:#fdf6ec; --card:#ffffff; --text:#3a3a3a;
+    --muted:#8a8a8a; --danger:#e05c5c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,#fff3e0 0%,var(--bg) 100%);
+    color:var(--text);
+    padding:24px;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+  header{text-align:center;margin-bottom:20px;}
+  header h1{font-size:2rem;margin:0 0 6px;}
+  header p{color:var(--muted);margin:0;}
+  .summary-bar{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .summary-pill{background:var(--card);border-radius:16px;padding:14px 22px;box-shadow:0 2px 8px rgba(0,0,0,0.06);text-align:center;min-width:140px;}
+  .summary-pill .num{font-size:1.5rem;font-weight:700;}
+  .summary-pill .lbl{font-size:0.8rem;color:var(--muted);}
+  .card{background:var(--card);border-radius:18px;padding:20px 22px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.06);}
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+  .card-head h2{margin:0;font-size:1.2rem;display:flex;align-items:center;gap:8px;}
+  .balance{font-size:1.6rem;font-weight:700;color:var(--pink);}
+  .goal-line{font-size:0.85rem;color:var(--muted);margin-bottom:8px;}
+  .progress-outer{background:#f0eee8;border-radius:10px;height:16px;overflow:hidden;margin-bottom:10px;}
+  .progress-inner{height:100%;background:linear-gradient(90deg,var(--pink),var(--orange));border-radius:10px;transition:width .4s ease;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  button{border:none;border-radius:10px;padding:9px 14px;font-size:0.85rem;cursor:pointer;font-weight:600;transition:transform .1s ease;}
+  button:active{transform:scale(0.96);}
+  .btn-deposit{background:var(--green);color:#fff;}
+  .btn-withdraw{background:var(--orange);color:#fff;}
+  .btn-secondary{background:#eee;color:var(--text);}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-blue{background:var(--blue);color:#fff;}
+  .btn-pin{background:var(--purple);color:#fff;}
+  .history{margin-top:12px;max-height:180px;overflow-y:auto;font-size:0.85rem;}
+  .history table{width:100%;border-collapse:collapse;}
+  .history th,.history td{text-align:left;padding:5px 6px;border-bottom:1px solid #f0eee8;}
+  .history th{color:var(--muted);font-weight:600;font-size:0.75rem;text-transform:uppercase;}
+  .amt-pos{color:var(--green);font-weight:600;}
+  .amt-neg{color:var(--danger);font-weight:600;}
+  .empty-hint{color:var(--muted);font-size:0.85rem;font-style:italic;}
+  .cat-badge{display:inline-block;background:#f2eefc;color:var(--purple);border-radius:8px;padding:2px 8px;font-size:0.75rem;font-weight:600;}
+  .members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  .add-member-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;}
+  input[type=text], input[type=number], input[type=date]{
+    padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;flex:1;min-width:100px;
+  }
+  select{padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;}
+  textarea{width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;font-family:inherit;resize:vertical;}
+  .avatar{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.95rem;flex-shrink:0;}
+  .toolbar{display:flex;justify-content:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  #fileInput{display:none;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;z-index:50;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#fff;border-radius:16px;padding:22px;width:320px;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+  .modal h3{margin-top:0;}
+  .modal-row{margin-bottom:12px;}
+  .modal-row label{display:block;font-size:0.8rem;color:var(--muted);margin-bottom:4px;}
+  .modal-row select{width:100%;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:0.85rem;opacity:0;pointer-events:none;transition:opacity .3s ease;z-index:60;}
+  .toast.show{opacity:1;}
+  .remove-x{background:none;color:var(--muted);font-size:1rem;padding:2px 6px;}
+  footer{text-align:center;color:var(--muted);font-size:0.8rem;margin-top:30px;}
+  .chart-wrap{width:100%;overflow-x:auto;}
+  .chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--muted);}
+  .legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .leaderboard-list{list-style:none;margin:0;padding:0;}
+  .leaderboard-list li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f0eee8;}
+  .leaderboard-list li:last-child{border-bottom:none;}
+  .lb-rank{font-size:1.1rem;width:28px;text-align:center;}
+  .lb-name{flex:1;font-weight:600;}
+  .lb-amt{color:var(--pink);font-weight:700;}
+  .tab-nav{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;}
+  .tab-btn{background:#f0eee8;color:var(--text);padding:10px 16px;border-radius:12px;font-size:0.85rem;}
+  .tab-btn.active{background:var(--pink);color:#fff;}
+  .alert-banner{background:#fff3cd;border:1px solid #ffe69c;color:#7a5c00;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:0.85rem;}
+  .alert-banner.danger{background:#fde2e2;border-color:#f5b5b5;color:#8a2323;}
+  .alert-item{margin-bottom:4px;}
+  .alert-item:last-child{margin-bottom:0;}
+  .recipe-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .recipe-item{padding:10px 14px;border:1px solid #f0eee8;border-radius:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+  .recipe-item:hover{background:#faf8f4;}
+  .chore-chip{display:inline-flex;align-items:center;gap:6px;background:#f2eefc;color:var(--purple);padding:4px 10px;border-radius:10px;font-size:0.8rem;margin:3px;}
+  .shopping-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0eee8;}
+  .shopping-item.done .s-name{text-decoration:line-through;color:var(--muted);}
+  .event-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0eee8;gap:10px;}
+  .loan-item{padding:12px;border-radius:10px;background:#faf8f4;margin-bottom:8px;}
+  .fridge-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;border-radius:10px;margin-bottom:6px;gap:10px;}
+  .fridge-item.ok{background:#eefaf0;}
+  .fridge-item.soon{background:#fff3e0;}
+  .fridge-item.expired{background:#fde2e2;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🏡 Hub di Famiglia</h1>
+    <p>Salvadanaio, turni, bacheca, frigo, ricette e prestiti — tutto in un posto solo.</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn-blue" id="saveBtn">💾 Salva dati (scarica file)</button>
+    <button class="btn-secondary" id="loadBtn">📂 Carica dati</button>
+    <button class="btn-pin" id="pinBtn">🔒 PIN genitori</button>
+    <input type="file" id="fileInput" accept="application/json">
+  </div>
+  <div style="text-align:center;margin-bottom:14px;">
+    <span id="syncStatus" style="font-size:0.78rem;color:var(--muted);"></span>
+  </div>
+  <div id="whoAmIBar" style="text-align:center;margin-bottom:14px;font-size:0.9rem;"></div>
+
+  <div class="tab-nav" id="tabNav"></div>
+  <div id="alertsBox"></div>
+  <div id="tabContent"></div>
+
+  <footer>I dati si salvano da soli su questo telefono e si sincronizzano in automatico con tutta la famiglia. "Salva dati" e "Carica dati" servono solo per un backup extra su file.</footer>
+</div>
+
+<div class="modal-overlay" id="txModal">
+  <div class="modal">
+    <h3 id="txModalTitle">Movimento</h3>
+    <div class="modal-row">
+      <label>Importo (€)</label>
+      <input type="number" id="txAmount" min="0" step="0.01" placeholder="0.00">
+    </div>
+    <div class="modal-row">
+      <label>Categoria</label>
+      <select id="txCategory">
+        <option value="Paghetta">Paghetta</option>
+        <option value="Regalo">Regalo</option>
+        <option value="Lavoretto">Lavoretto</option>
+        <option value="Giocattolo">Giocattolo</option>
+        <option value="Altro">Altro</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <label>Nota (opzionale)</label>
+      <input type="text" id="txNote" placeholder="es. Regalo di nonna">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="txCancel">Annulla</button>
+      <button class="btn-deposit" id="txConfirm">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="scanModal">
+  <div class="modal" style="width:360px;">
+    <h3>📷 Scansiona codice a barre</h3>
+    <video id="scanVideo" autoplay playsinline muted style="width:100%;border-radius:10px;background:#000;max-height:240px;object-fit:cover;"></video>
+    <div id="quaggaTarget" style="width:100%;max-height:240px;overflow:hidden;border-radius:10px;background:#000;display:none;"></div>
+    <div id="scanStatus" class="goal-line" style="margin-top:8px;"></div>
+    <div class="modal-row" style="margin-top:10px;">
+      <label>Oppure inserisci il codice manualmente</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="manualBarcode" placeholder="es. 8001505005707">
+        <button class="btn-deposit" id="manualBarcodeBtn">Cerca</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="scanCancel">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="whoAreYouModal">
+  <div class="modal" style="width:340px;">
+    <h3>👋 Chi sei?</h3>
+    <div class="goal-line">Scegli il tuo nome per salvarlo su questo telefono. La prossima volta l'app se lo ricorderà da sola.</div>
+    <div id="whoAreYouList" style="margin:14px 0;"></div>
+    <div class="modal-row">
+      <label>Non ti trovi in lista? Aggiungiti:</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="whoAreYouNewName" placeholder="Il tuo nome">
+        <button class="btn-deposit" id="whoAreYouAddBtn">Sono nuovo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+(function(){
+  const AVATAR_COLORS = ['#ff6b9d','#4a90d9','#4ecb71','#ffb347','#9b6bd9','#e05c5c','#2ec4b6','#e8a33d'];
+
+  // ---------- Configurazione condivisione famiglia (Firebase) ----------
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA-b6BKFBlbp0obCbqJcXIl8Be_guFQS9o",
+    authDomain: "app-casa-e-famiglia.firebaseapp.com",
+    databaseURL: "https://app-casa-e-famiglia-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "app-casa-e-famiglia",
+    storageBucket: "app-casa-e-famiglia.firebasestorage.app",
+    messagingSenderId: "1063698784058",
+    appId: "1:1063698784058:web:b7f9366914d29712153a03"
+  };
+
+  function defaultState(){
+    return {
+      pin: "",
+      salvadanaio: {
+        shared: { goalName:"Vacanza di famiglia", goalAmount:1000, balance:0, transactions:[] },
+        members: []
+      },
+      turni: {
+        chores: [
+          {id:'c1', name:"Buttare la spazzatura", points:5},
+          {id:'c2', name:"Apparecchiare la tavola", points:3},
+          {id:'c3', name:"Lavare i piatti", points:8},
+          {id:'c4', name:"Passare l'aspirapolvere", points:10},
+          {id:'c5', name:"Rifare il letto", points:2}
+        ],
+        log: [],
+        prize: "Scegliere il film della domenica"
+      },
+      bacheca: { events: [], shopping: [] },
+      frigo: { items: [] },
+      ricette: { recipes: [] },
+      prestiti: { loans: [] }
+    };
+  }
+
+  function normalizeState(data){
+    if(!data) return defaultState();
+    const base = defaultState();
+    let sal;
+    if(data.salvadanaio){ sal = data.salvadanaio; }
+    else if(data.shared && Array.isArray(data.members)){ sal = { shared: data.shared, members: data.members }; }
+    else { sal = base.salvadanaio; }
+    return {
+      pin: typeof data.pin === 'string' ? data.pin : '',
+      salvadanaio: Object.assign({shared:{goalName:'',goalAmount:0,balance:0,transactions:[]},members:[]}, sal),
+      turni: Object.assign({chores: base.turni.chores, log:[], prize:''}, data.turni || {}),
+      bacheca: Object.assign({events:[],shopping:[]}, data.bacheca || {}),
+      frigo: Object.assign({items:[]}, data.frigo || {}),
+      ricette: Object.assign({recipes:[]}, data.ricette || {}),
+      prestiti: Object.assign({loans:[]}, data.prestiti || {})
+    };
+  }
+
+  let state = defaultState();
+  try{
+    const cached = localStorage.getItem('hubFamigliaState');
+    if(cached) state = normalizeState(JSON.parse(cached));
+  }catch(e){ /* localStorage non disponibile: si parte da zero */ }
+
+  let currentTab = 'salvadanaio';
+  let selectedRecipeId = null;
+  let pendingTx = null;
+  let dbRef = null;
+  let applyingRemote = false;
+
+  // ---------- Profilo personale (chi sono io su questo telefono) ----------
+  const MY_PROFILE_KEY = 'hubFamigliaMyProfileId';
+  let myProfileId = null;
+  try{ myProfileId = localStorage.getItem(MY_PROFILE_KEY) || null; }catch(e){}
+
+  function myProfile(){
+    return state.salvadanaio.members.find(m => m.id === myProfileId) || null;
+  }
+  function setMyProfile(id){
+    myProfileId = id;
+    try{ localStorage.setItem(MY_PROFILE_KEY, id); }catch(e){}
+  }
+  function forgetMyProfile(){
+    myProfileId = null;
+    try{ localStorage.removeItem(MY_PROFILE_KEY); }catch(e){}
+    renderApp();
+  }
+
+  function renderWhoAmIBar(){
+    const bar = document.getElementById('whoAmIBar');
+    if(!bar) return;
+    const me = myProfile();
+    if(me){
+      bar.innerHTML = `👋 Ciao, <strong>${escapeHtml(me.name)}</strong> · <a href="#" id="notYouLink" style="color:var(--pink);">Non sei tu?</a>`;
+      const link = document.getElementById('notYouLink');
+      if(link) link.addEventListener('click', (e)=>{ e.preventDefault(); forgetMyProfile(); });
+    } else {
+      bar.innerHTML = '';
+    }
+  }
+
+  function renderWhoAreYouModal(){
+    const modal = document.getElementById('whoAreYouModal');
+    if(!modal) return;
+    const me = myProfile();
+    if(me){ modal.classList.remove('open'); return; }
+    modal.classList.add('open');
+    const list = document.getElementById('whoAreYouList');
+    const members = state.salvadanaio.members;
+    list.innerHTML = members.length ? members.map(m => `
+      <button class="btn-secondary" data-action="pick-profile" data-id="${m.id}" style="display:flex;align-items:center;gap:8px;width:100%;margin-bottom:8px;text-align:left;justify-content:flex-start;">
+        <span class="avatar" style="background:${colorFor(m.id)}">${initials(m.name)}</span> ${escapeHtml(m.name)}
+      </button>`).join('') : '<div class="empty-hint">Nessun membro ancora: sii il primo ad aggiungerti qui sotto.</div>';
+    list.querySelectorAll('[data-action="pick-profile"]').forEach(btn => btn.addEventListener('click', () => {
+      setMyProfile(btn.dataset.id);
+      renderApp();
+      showToast('Bentornato, ' + (myProfile() ? myProfile().name : '') + '!');
+    }));
+    const addBtn = document.getElementById('whoAreYouAddBtn');
+    if(addBtn) addBtn.onclick = () => {
+      const nameEl = document.getElementById('whoAreYouNewName');
+      const name = nameEl.value.trim();
+      if(!name){ showToast('Inserisci un nome'); return; }
+      const newMember = { id: uid(), name, goalName:'', goalAmount:0, balance:0, transactions:[] };
+      state.salvadanaio.members.push(newMember);
+      setMyProfile(newMember.id);
+      renderApp();
+      showToast('Benvenuto, ' + name + '!');
+    };
+  }
+
+  function updateSyncStatus(text, color){
+    const el = document.getElementById('syncStatus');
+    if(el){ el.textContent = text; el.style.color = color || 'var(--muted)'; }
+  }
+
+  function saveState(){
+    try{ localStorage.setItem('hubFamigliaState', JSON.stringify(state)); }catch(e){}
+    if(dbRef){ dbRef.set(state).catch(()=>{ updateSyncStatus('🔴 Errore di sincronizzazione', '#e05c5c'); }); }
+  }
+
+  function initFirebaseSync(){
+    if(!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey.indexOf('INSERISCI') === 0){
+      updateSyncStatus('⚪ Solo su questo dispositivo (nessuna condivisione configurata)');
+      return;
+    }
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      dbRef = firebase.database().ref('hubFamiglia');
+      updateSyncStatus('🟡 Connessione alla famiglia in corso...');
+      dbRef.on('value', (snapshot) => {
+        const remote = snapshot.val();
+        if(remote){
+          applyingRemote = true;
+          state = normalizeState(remote);
+          selectedRecipeId = null;
+          renderApp();
+          applyingRemote = false;
+        } else {
+          saveState();
+        }
+        updateSyncStatus('🟢 Sincronizzato con la famiglia', '#2f9e44');
+      }, (err) => {
+        updateSyncStatus('🔴 Impossibile connettersi (controlla la configurazione)', '#e05c5c');
+      });
+    }catch(e){
+      updateSyncStatus('🔴 Configurazione Firebase non valida', '#e05c5c');
+    }
+  }
+
+  // ---------- Helpers ----------
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+  function fmt(n){ return (Math.round(n*100)/100).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function todayStr(){ const d=new Date(); return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+  function todayISO(){ const d=new Date(); const off=d.getTimezoneOffset(); const local=new Date(d.getTime()-off*60000); return local.toISOString().slice(0,10); }
+  function parseDMY(str){ const [d,m,y]=str.split('/').map(Number); return new Date(y,m-1,d).getTime(); }
+  function isoTs(iso){ if(!iso) return 0; return new Date(iso+'T00:00:00').getTime(); }
+  function isoToDisplay(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+  function initials(name){ return name.trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase(); }
+  function colorFor(id){ let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))>>>0; return AVATAR_COLORS[h % AVATAR_COLORS.length]; }
+  function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+  function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str==null?'':String(str); return d.innerHTML; }
+  function progressPct(balance, goal){ if(!goal || goal<=0) return 0; return Math.max(0, Math.min(100, (balance/goal)*100)); }
+  function loadScript(src){
+    return new Promise((resolve, reject) => {
+      if(document.querySelector(`script[src="${src}"]`)){ resolve(); return; }
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('load fail'));
+      document.head.appendChild(s);
+    });
+  }
+
+  // ---------- Navigation ----------
+  const TABS = [
+    {id:'salvadanaio', label:'🐷 Salvadanaio'},
+    {id:'turni', label:'✅ Turni'},
+    {id:'bacheca', label:'📌 Bacheca'},
+    {id:'frigo', label:'🧊 Frigo'},
+    {id:'ricette', label:'📖 Ricette'},
+    {id:'prestiti', label:'📦 Prestiti'}
+  ];
+
+  function renderNav(){
+    document.getElementById('tabNav').innerHTML = TABS.map(t=>
+      `<button class="tab-btn ${currentTab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`
+    ).join('');
+    document.querySelectorAll('.tab-btn').forEach(b=>{
+      b.addEventListener('click', ()=>{ currentTab = b.dataset.tab; renderApp(); });
+    });
+  }
+
+  function renderApp(){
+    renderNav();
+    renderAlerts();
+    renderWhoAmIBar();
+    renderWhoAreYouModal();
+    const c = document.getElementById('tabContent');
+    if(currentTab==='salvadanaio'){ c.innerHTML = tplSalvadanaio(); bindSalvadanaioEvents(); }
+    else if(currentTab==='turni'){ c.innerHTML = tplTurni(); bindTurniEvents(); }
+    else if(currentTab==='bacheca'){ c.innerHTML = tplBacheca(); bindBachecaEvents(); }
+    else if(currentTab==='frigo'){ c.innerHTML = tplFrigo(); bindFrigoEvents(); }
+    else if(currentTab==='ricette'){ c.innerHTML = tplRicette(); bindRicetteEvents(); }
+    else if(currentTab==='prestiti'){ c.innerHTML = tplPrestiti(); bindPrestitiEvents(); }
+    if(!applyingRemote){ saveState(); }
+  }
+
+  // ---------- Alerts (global) ----------
+  function renderAlerts(){
+    const box = document.getElementById('alertsBox');
+    const alerts = [];
+    state.frigo.items.forEach(it=>{
+      const diff = Math.round((isoTs(it.expiry)-isoTs(todayISO()))/86400000);
+      if(diff<0) alerts.push({danger:true, text:`🧊 ${escapeHtml(it.name)} è scaduto`});
+      else if(diff<=2) alerts.push({danger:false, text:`🧊 ${escapeHtml(it.name)} scade ${diff===0?'oggi':(diff===1?'domani':`tra ${diff} giorni`)}`});
+    });
+    state.prestiti.loans.filter(l=>!l.returned).forEach(l=>{
+      if(isoTs(l.reminderDate) < isoTs(todayISO())) alerts.push({danger:true, text:`📦 Ricorda di farti restituire "${escapeHtml(l.item)}" da ${escapeHtml(l.to)}`});
+    });
+    state.bacheca.events.forEach(e=>{
+      const diff = Math.round((isoTs(e.date)-isoTs(todayISO()))/86400000);
+      if(diff===0) alerts.push({danger:false, text:`📅 Oggi: ${escapeHtml(e.title)}`});
+      else if(diff===1) alerts.push({danger:false, text:`📅 Domani: ${escapeHtml(e.title)}`});
+    });
+    if(!alerts.length){ box.innerHTML=''; return; }
+    const hasDanger = alerts.some(a=>a.danger);
+    box.innerHTML = `<div class="alert-banner ${hasDanger?'danger':''}">${alerts.map(a=>`<div class="alert-item">${a.text}</div>`).join('')}</div>`;
+  }
+
+  // ---------- Shared modal (deposit/withdraw) ----------
+  function openTxModal(title, cb){
+    document.getElementById('txModalTitle').textContent = title;
+    document.getElementById('txAmount').value = '';
+    document.getElementById('txNote').value = '';
+    document.getElementById('txCategory').value = 'Paghetta';
+    document.getElementById('txModal').classList.add('open');
+    pendingTx = cb;
+    document.getElementById('txAmount').focus();
+  }
+  function closeTxModal(){ document.getElementById('txModal').classList.remove('open'); pendingTx = null; }
+  document.getElementById('txCancel').addEventListener('click', closeTxModal);
+  document.getElementById('txConfirm').addEventListener('click', () => {
+    const amt = parseFloat(document.getElementById('txAmount').value);
+    const note = document.getElementById('txNote').value.trim();
+    const category = document.getElementById('txCategory').value;
+    if(isNaN(amt) || amt <= 0){ showToast('Inserisci un importo valido'); return; }
+    if(pendingTx) pendingTx(amt, note, category);
+    closeTxModal();
+  });
+  function addTransaction(target, amount, note, category){
+    target.balance = Math.round((target.balance + amount)*100)/100;
+    target.transactions.push({date: todayStr(), amount, note, category});
+  }
+  function transactionRows(transactions){
+    if(!transactions.length) return `<div class="empty-hint">Nessun movimento ancora.</div>`;
+    const rows = transactions.slice().reverse().map(t => `
+      <tr>
+        <td>${t.date}</td>
+        <td class="${t.amount>=0?'amt-pos':'amt-neg'}">${t.amount>=0?'+':''}€ ${fmt(t.amount)}</td>
+        <td>${t.category ? `<span class="cat-badge">${escapeHtml(t.category)}</span>` : ''}</td>
+        <td>${t.note ? escapeHtml(t.note) : ''}</td>
+      </tr>
+    `).join('');
+    return `<table><thead><tr><th>Data</th><th>Importo</th><th>Categoria</th><th>Nota</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // ---------- PIN ----------
+  function requirePinIfSet(cb){
+    if(!state.pin){ cb(); return; }
+    const entered = prompt('Inserisci il PIN dei genitori per confermare il prelievo:');
+    if(entered === null) return;
+    if(entered !== state.pin){ showToast('PIN errato'); return; }
+    cb();
+  }
+  document.getElementById('pinBtn').addEventListener('click', () => {
+    if(state.pin){
+      const cur = prompt('Inserisci il PIN attuale per modificarlo o rimuoverlo:');
+      if(cur === null) return;
+      if(cur !== state.pin){ showToast('PIN errato'); return; }
+    }
+    const next = prompt('Nuovo PIN (lascia vuoto per rimuovere la protezione sui prelievi):', '');
+    if(next === null) return;
+    state.pin = next.trim();
+    showToast(state.pin ? 'PIN impostato: servirà per i prelievi' : 'PIN rimosso');
+  });
+
+  // ---------- Barcode scanner ----------
+  let scanStream = null;
+  let scanning = false;
+  let quaggaActive = false;
+
+  function openScanModal(){
+    document.getElementById('scanModal').classList.add('open');
+    document.getElementById('scanStatus').textContent = '';
+    document.getElementById('manualBarcode').value = '';
+    document.getElementById('scanVideo').style.display = 'none';
+    document.getElementById('quaggaTarget').style.display = 'none';
+    startCamera();
+  }
+  function closeScanModal(){
+    document.getElementById('scanModal').classList.remove('open');
+    stopCamera();
+  }
+  function stopCamera(){
+    scanning = false;
+    if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
+    if(quaggaActive && window.Quagga){ try{ window.Quagga.stop(); }catch(e){} quaggaActive = false; }
+  }
+  async function startCamera(){
+    const statusEl = document.getElementById('scanStatus');
+    const video = document.getElementById('scanVideo');
+    const quaggaTarget = document.getElementById('quaggaTarget');
+
+    if('BarcodeDetector' in window){
+      try{
+        scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+        video.style.display = 'block';
+        quaggaTarget.style.display = 'none';
+        video.srcObject = scanStream;
+        statusEl.textContent = 'Inquadra il codice a barre...';
+        scanning = true;
+        const detector = new window.BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
+        const loop = async () => {
+          if(!scanning) return;
+          try{
+            const codes = await detector.detect(video);
+            if(codes.length){ scanning = false; handleBarcodeFound(codes[0].rawValue); return; }
+          }catch(e){ /* ignora errori di singolo frame */ }
+          if(scanning) requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+        return;
+      }catch(err){
+        statusEl.textContent = 'Fotocamera non disponibile: inserisci il codice manualmente qui sotto.';
+        return;
+      }
+    }
+
+    // Fallback per browser senza BarcodeDetector nativo (es. Safari/iOS): usa QuaggaJS
+    statusEl.textContent = 'Avvio scanner...';
+    video.style.display = 'none';
+    quaggaTarget.style.display = 'block';
+    quaggaTarget.innerHTML = '';
+    try{
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js');
+    }catch(e){
+      statusEl.textContent = 'Impossibile caricare lo scanner (serve connessione internet). Inserisci il codice manualmente.';
+      return;
+    }
+    if(!window.Quagga){
+      statusEl.textContent = 'Scanner non disponibile su questo browser. Inserisci il codice manualmente.';
+      return;
+    }
+    quaggaActive = true;
+    window.Quagga.init({
+      inputStream:{ name:'Live', type:'LiveStream', target: quaggaTarget, constraints:{ facingMode:'environment' } },
+      decoder:{ readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader'] },
+      locate:true
+    }, function(err){
+      if(err){
+        statusEl.textContent = 'Fotocamera non disponibile: inserisci il codice manualmente qui sotto.';
+        quaggaActive = false;
+        return;
+      }
+      statusEl.textContent = 'Inquadra il codice a barre...';
+      window.Quagga.start();
+    });
+    window.Quagga.onDetected(function(result){
+      if(!quaggaActive) return;
+      const code = result && result.codeResult && result.codeResult.code;
+      if(code){ quaggaActive = false; window.Quagga.stop(); handleBarcodeFound(code); }
+    });
+  }
+  function handleBarcodeFound(code){
+    stopCamera();
+    lookupBarcode(code);
+  }
+  async function lookupBarcode(code){
+    const statusEl = document.getElementById('scanStatus');
+    if(statusEl) statusEl.textContent = 'Ricerca prodotto in corso...';
+    try{
+      const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json`);
+      const data = await res.json();
+      if(data.status === 1 && data.product && (data.product.product_name || data.product.generic_name)){
+        const name = data.product.product_name || data.product.generic_name;
+        closeScanModal();
+        const nameInput = document.getElementById('newFridgeName');
+        if(nameInput){ nameInput.value = name; nameInput.focus(); }
+        showToast('Prodotto trovato: ' + name);
+      } else {
+        closeScanModal();
+        showToast(`Codice ${code} non trovato: inserisci il nome manualmente`);
+      }
+    }catch(err){
+      closeScanModal();
+      showToast('Serve una connessione internet per cercare il prodotto');
+    }
+  }
+  document.getElementById('scanCancel').addEventListener('click', closeScanModal);
+  document.getElementById('manualBarcodeBtn').addEventListener('click', ()=>{
+    const code = document.getElementById('manualBarcode').value.trim();
+    if(!code){ showToast('Inserisci un codice'); return; }
+    stopCamera();
+    lookupBarcode(code);
+  });
+
+  // ================= SALVADANAIO =================
+  function totalFamily(){
+    let total = state.salvadanaio.shared.balance;
+    state.salvadanaio.members.forEach(m => total += m.balance);
+    return total;
+  }
+
+  function buildSeries(){
+    const entities = [
+      {name: state.salvadanaio.shared.goalName || 'Fondo comune', color:'#4a90d9', transactions: state.salvadanaio.shared.transactions},
+      ...state.salvadanaio.members.map(m=>({name:m.name, color:colorFor(m.id), transactions:m.transactions}))
+    ];
+    let allDates = new Set();
+    entities.forEach(e => e.transactions.forEach(t => allDates.add(t.date)));
+    let dates = Array.from(allDates).sort((a,b)=>parseDMY(a)-parseDMY(b));
+    if(!dates.length) return {dates:[], series:[]};
+    const series = entities.map(e=>{
+      const sorted = e.transactions.slice().sort((a,b)=>parseDMY(a.date)-parseDMY(b.date));
+      let idx=0, running=0;
+      const values = dates.map(d=>{
+        while(idx<sorted.length && parseDMY(sorted[idx].date)<=parseDMY(d)){ running += sorted[idx].amount; idx++; }
+        return running;
+      });
+      return {name:e.name, color:e.color, values};
+    });
+    return {dates, series};
+  }
+
+  function buildChartHtml(){
+    const {dates, series} = buildSeries();
+    if(!dates.length) return `<div class="empty-hint">Aggiungi qualche movimento per vedere l'andamento nel tempo.</div>`;
+    const W=680,H=220,padL=50,padR=10,padT=15,padB=25;
+    const allVals = series.flatMap(s=>s.values).concat([0]);
+    const minVal = Math.min(...allVals);
+    const maxVal = Math.max(...allVals, 1);
+    const range = (maxVal-minVal) || 1;
+    const xStep = dates.length>1 ? (W-padL-padR)/(dates.length-1) : 0;
+    const x = i => padL + i*xStep;
+    const y = v => (H-padB) - ((v-minVal)/range)*(H-padT-padB);
+    const zeroY = y(0);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:480px;">`;
+    svg += `<line x1="${padL}" y1="${zeroY}" x2="${W-padR}" y2="${zeroY}" stroke="#e5e2da" stroke-width="1"/>`;
+    series.forEach(s=>{
+      const pts = s.values.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+      svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    });
+    svg += `<text x="${padL}" y="${H-6}" font-size="10" fill="#8a8a8a">${dates[0]}</text>`;
+    svg += `<text x="${W-padR}" y="${H-6}" font-size="10" fill="#8a8a8a" text-anchor="end">${dates[dates.length-1]}</text>`;
+    svg += `</svg>`;
+    const legend = series.map(s=>`<span class="legend-item"><span class="legend-dot" style="background:${s.color}"></span>${escapeHtml(s.name)}</span>`).join('');
+    return svg + `<div class="chart-legend">${legend}</div>`;
+  }
+
+  function tplSalvadanaio(){
+    const s = state.salvadanaio.shared;
+    const members = state.salvadanaio.members;
+    const total = totalFamily();
+    const goalsCount = members.filter(m=>m.goalAmount>0).length + (s.goalAmount>0?1:0);
+    const achieved = (s.goalAmount>0 && s.balance>=s.goalAmount?1:0) + members.filter(m=>m.goalAmount>0 && m.balance>=m.goalAmount).length;
+    const pctShared = progressPct(s.balance, s.goalAmount);
+
+    const summaryHtml = `
+      <div class="summary-bar">
+        <div class="summary-pill"><div class="num">€ ${fmt(total)}</div><div class="lbl">Totale famiglia</div></div>
+        <div class="summary-pill"><div class="num">${members.length}</div><div class="lbl">Membri</div></div>
+        <div class="summary-pill"><div class="num">${achieved}/${goalsCount}</div><div class="lbl">Obiettivi raggiunti</div></div>
+      </div>`;
+
+    const chartCard = `<div class="card"><div class="card-head"><h2>📈 Andamento dei risparmi</h2></div><div class="chart-wrap">${buildChartHtml()}</div></div>`;
+
+    const sharedHtml = `
+      <div class="card">
+        <div class="card-head">
+          <h2>🏡 Fondo comune — ${escapeHtml(s.goalName || 'Senza nome')}</h2>
+          <div class="balance">€ ${fmt(s.balance)}</div>
+        </div>
+        <div class="goal-line">${s.goalAmount>0 ? `Obiettivo: € ${fmt(s.goalAmount)} (${pctShared.toFixed(0)}%)` : 'Nessun obiettivo impostato'}</div>
+        ${s.goalAmount>0 ? `<div class="progress-outer"><div class="progress-inner" style="width:${pctShared}%"></div></div>` : ''}
+        <div class="actions">
+          <button class="btn-deposit" data-action="deposit-shared">+ Deposita</button>
+          <button class="btn-withdraw" data-action="withdraw-shared">− Preleva</button>
+          <button class="btn-secondary" data-action="edit-shared-goal">✎ Modifica obiettivo</button>
+        </div>
+        <div class="history">${transactionRows(s.transactions)}</div>
+      </div>`;
+
+    const medals=['🥇','🥈','🥉'];
+    const sortedMembers = members.slice().sort((a,b)=>b.balance-a.balance);
+    const leaderboardHtml = `
+      <div class="card">
+        <div class="card-head"><h2>🏆 Classifica risparmiatori</h2></div>
+        <ul class="leaderboard-list">
+          ${members.length ? sortedMembers.map((m,i)=>`
+            <li>
+              <span class="lb-rank">${medals[i]||(i+1)}</span>
+              <span class="avatar" style="background:${colorFor(m.id)}">${initials(m.name)}</span>
+              <span class="lb-name">${escapeHtml(m.name)}</span>
+              <span class="lb-amt">€ ${fmt(m.balance)}</span>
+            </li>`).join('') : '<div class="empty-hint">Aggiungi dei membri per vedere la classifica.</div>'}
+        </ul>
+      </div>`;
+
+    const membersHtml = `
+      <div class="card">
+        <div class="card-head"><h2>👨‍👩‍👧‍👦 Salvadanai individuali</h2></div>
+        <div class="members-grid">
+          ${members.length ? members.map(m=>{
+            const pct = progressPct(m.balance, m.goalAmount);
+            return `
+            <div class="card" style="margin-bottom:0;${m.id===myProfileId?'border:2px solid var(--pink);':''}">
+              <div class="card-head">
+                <h2><span class="avatar" style="background:${colorFor(m.id)}">${initials(m.name)}</span>${escapeHtml(m.name)}${m.id===myProfileId?' <span style="color:var(--pink);font-size:0.75rem;font-weight:700;">TU</span>':''}</h2>
+                <button class="remove-x" data-action="remove-member" data-id="${m.id}">✕</button>
+              </div>
+              <div class="balance">€ ${fmt(m.balance)}</div>
+              <div class="goal-line">${m.goalAmount>0 ? `${escapeHtml(m.goalName||'Obiettivo')}: € ${fmt(m.goalAmount)} (${pct.toFixed(0)}%)` : 'Nessun obiettivo impostato'}</div>
+              ${m.goalAmount>0 ? `<div class="progress-outer"><div class="progress-inner" style="width:${pct}%"></div></div>` : ''}
+              <div class="actions">
+                <button class="btn-deposit" data-action="deposit-member" data-id="${m.id}">+ Deposita</button>
+                <button class="btn-withdraw" data-action="withdraw-member" data-id="${m.id}">− Preleva</button>
+              </div>
+              <div class="history">${transactionRows(m.transactions)}</div>
+            </div>`;
+          }).join('') : '<div class="empty-hint">Nessun membro ancora. Aggiungine uno qui sotto.</div>'}
+        </div>
+        <div class="add-member-form">
+          <input type="text" id="newMemberName" placeholder="Nome del membro (es. Marco)">
+          <input type="text" id="newMemberGoalName" placeholder="Obiettivo (es. Bici nuova) — opzionale">
+          <input type="number" id="newMemberGoalAmount" placeholder="€ Obiettivo" min="0" step="0.01">
+          <button class="btn-deposit" data-action="add-member">+ Aggiungi membro</button>
+        </div>
+      </div>`;
+
+    return summaryHtml + chartCard + sharedHtml + leaderboardHtml + membersHtml;
+  }
+
+  function bindSalvadanaioEvents(){
+    const c = document.getElementById('tabContent');
+    const dep = c.querySelector('[data-action="deposit-shared"]');
+    if(dep) dep.addEventListener('click', ()=> openTxModal('Deposita nel fondo comune', (amt,note,cat) => {
+      addTransaction(state.salvadanaio.shared, amt, note, cat); renderApp(); showToast('Deposito registrato');
+    }));
+    const wit = c.querySelector('[data-action="withdraw-shared"]');
+    if(wit) wit.addEventListener('click', ()=> requirePinIfSet(()=> openTxModal('Preleva dal fondo comune', (amt,note,cat) => {
+      addTransaction(state.salvadanaio.shared, -amt, note, cat); renderApp(); showToast('Prelievo registrato');
+    })));
+    const editGoal = c.querySelector('[data-action="edit-shared-goal"]');
+    if(editGoal) editGoal.addEventListener('click', ()=>{
+      const name = prompt('Nome obiettivo del fondo comune:', state.salvadanaio.shared.goalName || '');
+      if(name === null) return;
+      const amtStr = prompt('Importo obiettivo (€):', state.salvadanaio.shared.goalAmount || 0);
+      if(amtStr === null) return;
+      const amt = parseFloat(amtStr);
+      state.salvadanaio.shared.goalName = name;
+      state.salvadanaio.shared.goalAmount = isNaN(amt) ? 0 : amt;
+      renderApp();
+    });
+    c.querySelectorAll('[data-action="deposit-member"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const member = state.salvadanaio.members.find(m => m.id === btn.dataset.id);
+      openTxModal(`Deposita per ${member.name}`, (amt,note,cat) => { addTransaction(member, amt, note, cat); renderApp(); showToast('Deposito registrato'); });
+    }));
+    c.querySelectorAll('[data-action="withdraw-member"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const member = state.salvadanaio.members.find(m => m.id === btn.dataset.id);
+      requirePinIfSet(()=> openTxModal(`Preleva per ${member.name}`, (amt,note,cat) => { addTransaction(member, -amt, note, cat); renderApp(); showToast('Prelievo registrato'); }));
+    }));
+    c.querySelectorAll('[data-action="remove-member"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const member = state.salvadanaio.members.find(m => m.id === btn.dataset.id);
+      if(confirm(`Rimuovere ${member.name} e tutto il suo storico?`)){
+        state.salvadanaio.members = state.salvadanaio.members.filter(m => m.id !== btn.dataset.id);
+        renderApp();
+      }
+    }));
+    const addMemberBtn = c.querySelector('[data-action="add-member"]');
+    if(addMemberBtn) addMemberBtn.addEventListener('click', ()=>{
+      const nameEl = document.getElementById('newMemberName');
+      const goalNameEl = document.getElementById('newMemberGoalName');
+      const goalAmtEl = document.getElementById('newMemberGoalAmount');
+      const name = nameEl.value.trim();
+      if(!name){ showToast('Inserisci un nome'); return; }
+      const goalAmount = parseFloat(goalAmtEl.value) || 0;
+      state.salvadanaio.members.push({ id: uid(), name, goalName: goalNameEl.value.trim(), goalAmount, balance:0, transactions:[] });
+      renderApp();
+      showToast('Membro aggiunto');
+    });
+  }
+
+  // ================= TURNI =================
+  function getWeekRange(){
+    const now = new Date(); now.setHours(0,0,0,0);
+    const day = now.getDay();
+    const diffToMonday = (day===0?-6:1-day);
+    const monday = new Date(now); monday.setDate(now.getDate()+diffToMonday);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+    return {start:monday.getTime(), end:sunday.getTime()+86399999};
+  }
+  function computeChorePoints(){
+    const {start,end} = getWeekRange();
+    const weekly = {}, total = {};
+    state.turni.log.forEach(l=>{
+      total[l.memberId] = (total[l.memberId]||0)+l.points;
+      const ts = isoTs(l.date);
+      if(ts>=start && ts<=end) weekly[l.memberId] = (weekly[l.memberId]||0)+l.points;
+    });
+    return {weekly, total};
+  }
+
+  function tplTurni(){
+    const members = state.salvadanaio.members;
+    const {weekly, total} = computeChorePoints();
+    const ranked = members.slice().sort((a,b)=>(weekly[b.id]||0)-(weekly[a.id]||0));
+    const memberOptions = members.map(m=>`<option value="${m.id}" ${m.id===myProfileId?'selected':''}>${escapeHtml(m.name)}</option>`).join('');
+    const choreOptions = state.turni.chores.map(c=>`<option value="${c.id}">${escapeHtml(c.name)} (${c.points}pt)</option>`).join('');
+
+    const leaderboardHtml = members.length ? `
+      <ul class="leaderboard-list">
+        ${ranked.map((m,i)=>`
+          <li>
+            <span class="lb-rank">${i===0 && (weekly[m.id]||0)>0 ? '👑' : (i+1)}</span>
+            <span class="avatar" style="background:${colorFor(m.id)}">${initials(m.name)}</span>
+            <span class="lb-name">${escapeHtml(m.name)}</span>
+            <span class="lb-amt">${weekly[m.id]||0} pt <span style="color:var(--muted);font-weight:400;font-size:0.75rem;">(tot. ${total[m.id]||0})</span></span>
+          </li>`).join('')}
+      </ul>` : `<div class="empty-hint">Aggiungi dei membri nella scheda Salvadanaio per iniziare.</div>`;
+
+    const choresHtml = state.turni.chores.map(c=>`
+      <span class="chore-chip">${escapeHtml(c.name)} · ${c.points}pt <button class="remove-x" data-action="remove-chore" data-id="${c.id}" style="padding:0 0 0 4px;">✕</button></span>
+    `).join('');
+
+    const logRows = state.turni.log.slice().reverse().slice(0,25).map(l=>{
+      const m = members.find(mm=>mm.id===l.memberId);
+      return `<tr><td>${isoToDisplay(l.date)}</td><td>${m?escapeHtml(m.name):'—'}</td><td>${escapeHtml(l.choreName)}</td><td>+${l.points}pt</td></tr>`;
+    }).join('');
+
+    return `
+      <div class="card">
+        <div class="card-head"><h2>🏆 Classifica della settimana</h2></div>
+        <div class="goal-line">Premio in palio: <strong>${escapeHtml(state.turni.prize||'nessuno impostato')}</strong> <button class="btn-secondary" data-action="edit-prize" style="margin-left:8px;">✎ Modifica</button></div>
+        ${leaderboardHtml}
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>✅ Segna un compito svolto</h2></div>
+        ${members.length && state.turni.chores.length ? `
+        <div class="add-member-form">
+          <select id="choreMember">${memberOptions}</select>
+          <select id="choreSelect">${choreOptions}</select>
+          <button class="btn-deposit" data-action="log-chore">+ Segna fatto</button>
+        </div>` : `<div class="empty-hint">Servono almeno un membro (scheda Salvadanaio) e un compito.</div>`}
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>📋 Catalogo compiti</h2></div>
+        <div>${choresHtml || '<div class="empty-hint">Nessun compito definito.</div>'}</div>
+        <div class="add-member-form">
+          <input type="text" id="newChoreName" placeholder="Nome compito (es. Piegare i panni)">
+          <input type="number" id="newChorePoints" placeholder="Punti" min="1" step="1" style="max-width:100px;">
+          <button class="btn-deposit" data-action="add-chore">+ Aggiungi compito</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>🗒️ Storico recente</h2></div>
+        <div class="history">${state.turni.log.length ? `<table><thead><tr><th>Data</th><th>Chi</th><th>Compito</th><th>Punti</th></tr></thead><tbody>${logRows}</tbody></table>` : '<div class="empty-hint">Nessun compito ancora registrato.</div>'}</div>
+      </div>`;
+  }
+
+  function bindTurniEvents(){
+    const c = document.getElementById('tabContent');
+    c.querySelectorAll('[data-action="remove-chore"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      state.turni.chores = state.turni.chores.filter(ch=>ch.id!==btn.dataset.id);
+      renderApp();
+    }));
+    const editPrizeBtn = c.querySelector('[data-action="edit-prize"]');
+    if(editPrizeBtn) editPrizeBtn.addEventListener('click', ()=>{
+      const p = prompt('Premio della settimana:', state.turni.prize||'');
+      if(p===null) return;
+      state.turni.prize = p.trim();
+      renderApp();
+    });
+    const logBtn = c.querySelector('[data-action="log-chore"]');
+    if(logBtn) logBtn.addEventListener('click', ()=>{
+      const memberId = document.getElementById('choreMember').value;
+      const choreId = document.getElementById('choreSelect').value;
+      const chore = state.turni.chores.find(ch=>ch.id===choreId);
+      if(!chore) return;
+      state.turni.log.push({id:uid(), memberId, choreId, choreName:chore.name, points:chore.points, date: todayISO()});
+      renderApp();
+      showToast('Compito registrato!');
+    });
+    const addChoreBtn = c.querySelector('[data-action="add-chore"]');
+    if(addChoreBtn) addChoreBtn.addEventListener('click', ()=>{
+      const nameEl = document.getElementById('newChoreName');
+      const ptsEl = document.getElementById('newChorePoints');
+      const name = nameEl.value.trim();
+      const points = parseInt(ptsEl.value,10);
+      if(!name || !points || points<=0){ showToast('Inserisci nome e punti validi'); return; }
+      state.turni.chores.push({id:uid(), name, points});
+      renderApp();
+      showToast('Compito aggiunto');
+    });
+  }
+
+  // ================= BACHECA =================
+  function tplBacheca(){
+    const events = state.bacheca.events.slice().sort((a,b)=>isoTs(a.date)-isoTs(b.date));
+    const eventsHtml = events.length ? events.map(e=>{
+      const diff = Math.round((isoTs(e.date)-isoTs(todayISO()))/86400000);
+      let tag = '';
+      if(diff<0) tag = '<span style="color:var(--muted);">(passato)</span>';
+      else if(diff===0) tag = '<span style="color:var(--pink);font-weight:700;">(oggi)</span>';
+      else if(diff===1) tag = '<span style="color:var(--orange);font-weight:700;">(domani)</span>';
+      return `
+      <div class="event-item">
+        <div><strong>${isoToDisplay(e.date)}</strong> ${tag} — ${escapeHtml(e.title)}${e.note?`<div style="color:var(--muted);font-size:0.8rem;">${escapeHtml(e.note)}</div>`:''}</div>
+        <button class="remove-x" data-action="remove-event" data-id="${e.id}">✕</button>
+      </div>`;
+    }).join('') : '<div class="empty-hint">Nessun impegno in programma.</div>';
+
+    const shopping = state.bacheca.shopping;
+    const shoppingHtml = shopping.length ? shopping.map(i=>`
+      <div class="shopping-item ${i.done?'done':''}">
+        <input type="checkbox" data-action="toggle-shopping" data-id="${i.id}" ${i.done?'checked':''}>
+        <span class="s-name">${escapeHtml(i.name)}</span>
+        <span style="flex:1;"></span>
+        <button class="remove-x" data-action="remove-shopping" data-id="${i.id}">✕</button>
+      </div>`).join('') : '<div class="empty-hint">Lista della spesa vuota.</div>';
+
+    return `
+      <div class="card">
+        <div class="card-head"><h2>📅 Prossimi impegni</h2></div>
+        <div>${eventsHtml}</div>
+        <div class="add-member-form">
+          <input type="date" id="newEventDate">
+          <input type="text" id="newEventTitle" placeholder="Titolo (es. Dentista di Sofia)">
+          <input type="text" id="newEventNote" placeholder="Nota opzionale">
+          <button class="btn-deposit" data-action="add-event">+ Aggiungi</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>🛒 Lista della spesa</h2></div>
+        <div>${shoppingHtml}</div>
+        <div class="add-member-form">
+          <input type="text" id="newShoppingItem" placeholder="Cosa serve? (es. Latte)">
+          <button class="btn-deposit" data-action="add-shopping">+ Aggiungi</button>
+          <button class="btn-secondary" data-action="clear-shopping">🧹 Rimuovi acquistati</button>
+        </div>
+        <div class="goal-line" style="margin-top:8px;">Questa lista si aggiorna in automatico su tutti i telefoni della famiglia.</div>
+      </div>`;
+  }
+
+  function bindBachecaEvents(){
+    const c = document.getElementById('tabContent');
+    const addEventBtn = c.querySelector('[data-action="add-event"]');
+    if(addEventBtn) addEventBtn.addEventListener('click', ()=>{
+      const date = document.getElementById('newEventDate').value;
+      const title = document.getElementById('newEventTitle').value.trim();
+      const note = document.getElementById('newEventNote').value.trim();
+      if(!date || !title){ showToast('Inserisci data e titolo'); return; }
+      state.bacheca.events.push({id:uid(), date, title, note});
+      renderApp();
+      showToast('Impegno aggiunto');
+    });
+    c.querySelectorAll('[data-action="remove-event"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      state.bacheca.events = state.bacheca.events.filter(e=>e.id!==btn.dataset.id);
+      renderApp();
+    }));
+    const addShopBtn = c.querySelector('[data-action="add-shopping"]');
+    if(addShopBtn) addShopBtn.addEventListener('click', ()=>{
+      const nameEl = document.getElementById('newShoppingItem');
+      const name = nameEl.value.trim();
+      if(!name){ showToast('Inserisci un nome'); return; }
+      state.bacheca.shopping.push({id:uid(), name, done:false});
+      renderApp();
+    });
+    c.querySelectorAll('[data-action="toggle-shopping"]').forEach(chk=>chk.addEventListener('change', ()=>{
+      const item = state.bacheca.shopping.find(i=>i.id===chk.dataset.id);
+      if(item) item.done = chk.checked;
+      renderApp();
+    }));
+    c.querySelectorAll('[data-action="remove-shopping"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      state.bacheca.shopping = state.bacheca.shopping.filter(i=>i.id!==btn.dataset.id);
+      renderApp();
+    }));
+    const clearBtn = c.querySelector('[data-action="clear-shopping"]');
+    if(clearBtn) clearBtn.addEventListener('click', ()=>{
+      state.bacheca.shopping = state.bacheca.shopping.filter(i=>!i.done);
+      renderApp();
+    });
+  }
+
+  // ================= FRIGO =================
+  function matchRecipesForItem(itemName){
+    const n = itemName.toLowerCase();
+    return state.ricette.recipes.filter(r=>r.ingredients.some(ing=>{
+      const iname = ing.name.toLowerCase();
+      return iname.includes(n) || n.includes(iname);
+    }));
+  }
+
+  function tplFrigo(){
+    const items = state.frigo.items.slice().sort((a,b)=>isoTs(a.expiry)-isoTs(b.expiry));
+    const itemsHtml = items.length ? items.map(it=>{
+      const diff = Math.round((isoTs(it.expiry)-isoTs(todayISO()))/86400000);
+      let cls='ok', label=`scade tra ${diff}g`;
+      if(diff<0){ cls='expired'; label='scaduto'; }
+      else if(diff<=2){ cls='soon'; label = diff===0?'scade oggi':(diff===1?'scade domani':`scade tra ${diff}g`); }
+      const matches = matchRecipesForItem(it.name);
+      const suggestion = (diff<=2 && matches.length) ? `<div style="font-size:0.8rem;color:var(--blue);margin-top:2px;">💡 Ricetta suggerita: ${matches.map(m=>escapeHtml(m.name)).join(', ')}</div>` : '';
+      return `
+      <div class="fridge-item ${cls}">
+        <div>
+          <strong>${escapeHtml(it.name)}</strong> ${it.qty?`(${escapeHtml(it.qty)})`:''} — ${label}
+          ${suggestion}
+        </div>
+        <button class="remove-x" data-action="remove-fridge" data-id="${it.id}">✕</button>
+      </div>`;
+    }).join('') : `<div class="empty-hint">Il frigo è vuoto (nell'app!).</div>`;
+
+    return `
+      <div class="card">
+        <div class="card-head"><h2>🧊 Cosa c'è in frigo</h2></div>
+        <div>${itemsHtml}</div>
+        <div class="add-member-form">
+          <button class="btn-pin" type="button" data-action="open-scan">📷 Scansiona codice a barre</button>
+        </div>
+        <div class="add-member-form">
+          <input type="text" id="newFridgeName" placeholder="Alimento (es. Yogurt)">
+          <input type="text" id="newFridgeQty" placeholder="Quantità (opzionale)">
+          <input type="date" id="newFridgeExpiry">
+          <button class="btn-deposit" data-action="add-fridge">+ Aggiungi</button>
+        </div>
+        <div class="goal-line" style="margin-top:8px;">La scansione richiede il permesso della fotocamera e internet per riconoscere il prodotto; se non funziona puoi sempre inserire il codice o il nome a mano.</div>
+      </div>`;
+  }
+
+  function bindFrigoEvents(){
+    const c = document.getElementById('tabContent');
+    const scanBtn = c.querySelector('[data-action="open-scan"]');
+    if(scanBtn) scanBtn.addEventListener('click', openScanModal);
+    const addBtn = c.querySelector('[data-action="add-fridge"]');
+    if(addBtn) addBtn.addEventListener('click', ()=>{
+      const name = document.getElementById('newFridgeName').value.trim();
+      const qty = document.getElementById('newFridgeQty').value.trim();
+      const expiry = document.getElementById('newFridgeExpiry').value;
+      if(!name || !expiry){ showToast('Inserisci nome e data di scadenza'); return; }
+      state.frigo.items.push({id:uid(), name, qty, expiry});
+      renderApp();
+      showToast('Alimento aggiunto');
+    });
+    c.querySelectorAll('[data-action="remove-fridge"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      state.frigo.items = state.frigo.items.filter(i=>i.id!==btn.dataset.id);
+      renderApp();
+    }));
+  }
+
+  // ================= RICETTE =================
+  function parseIngredientsText(text){
+    return text.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{
+      const parts = line.split(',').map(p=>p.trim());
+      return { name: parts[0]||'', qty: parseFloat(parts[1])||0, unit: parts[2]||'' };
+    });
+  }
+
+  function tplRicette(){
+    const recipes = state.ricette.recipes;
+    const list = recipes.length ? `<div class="recipe-list">${recipes.map(r=>`
+      <div class="recipe-item" data-action="select-recipe" data-id="${r.id}">
+        <span>${escapeHtml(r.name)} <span style="color:var(--muted);font-size:0.8rem;">(${r.servings} porzioni base)</span></span>
+        <button class="remove-x" data-action="remove-recipe" data-id="${r.id}">✕</button>
+      </div>`).join('')}</div>` : '<div class="empty-hint">Nessuna ricetta salvata ancora.</div>';
+
+    let detail = '';
+    const sel = recipes.find(r=>r.id===selectedRecipeId);
+    if(sel){
+      detail = `
+      <div class="card">
+        <div class="card-head">
+          <h2>🍽️ ${escapeHtml(sel.name)}</h2>
+          <button class="btn-secondary" data-action="close-recipe">Chiudi</button>
+        </div>
+        <div class="modal-row" style="max-width:200px;">
+          <label>Per quante persone?</label>
+          <input type="number" id="scaleServings" min="1" step="1" value="${sel.servings}">
+        </div>
+        <div id="scaledIngredients"></div>
+        <div class="goal-line" style="margin-top:10px;white-space:pre-wrap;">${escapeHtml(sel.steps||'')}</div>
+      </div>`;
+    }
+
+    return `
+      <div class="card">
+        <div class="card-head"><h2>📖 Ricettario di famiglia</h2></div>
+        ${list}
+      </div>
+      ${detail}
+      <div class="card">
+        <div class="card-head"><h2>➕ Nuova ricetta</h2></div>
+        <div class="modal-row"><label>Nome ricetta</label><input type="text" id="newRecipeName" placeholder="es. Lasagne della nonna"></div>
+        <div class="modal-row"><label>Porzioni base</label><input type="number" id="newRecipeServings" min="1" step="1" value="4" style="max-width:120px;"></div>
+        <div class="modal-row"><label>Ingredienti — uno per riga: nome, quantità, unità</label><textarea id="newRecipeIngredients" rows="4" placeholder="Farina, 200, g&#10;Uova, 3, pz&#10;Latte, 250, ml"></textarea></div>
+        <div class="modal-row"><label>Procedimento</label><textarea id="newRecipeSteps" rows="4" placeholder="Descrivi i passaggi..."></textarea></div>
+        <button class="btn-deposit" data-action="add-recipe">+ Salva ricetta</button>
+      </div>`;
+  }
+
+  function renderScaledIngredients(){
+    const sel = state.ricette.recipes.find(r=>r.id===selectedRecipeId);
+    const box = document.getElementById('scaledIngredients');
+    if(!sel || !box) return;
+    const desired = parseFloat(document.getElementById('scaleServings').value) || sel.servings;
+    const factor = desired / sel.servings;
+    box.innerHTML = `<ul style="padding-left:18px;">${sel.ingredients.map(ing=>`<li>${(ing.qty*factor).toLocaleString('it-IT',{maximumFractionDigits:1})} ${escapeHtml(ing.unit)} ${escapeHtml(ing.name)}</li>`).join('')}</ul>`;
+  }
+
+  function bindRicetteEvents(){
+    const c = document.getElementById('tabContent');
+    c.querySelectorAll('[data-action="select-recipe"]').forEach(el=>el.addEventListener('click', ()=>{
+      selectedRecipeId = el.dataset.id;
+      renderApp();
+    }));
+    c.querySelectorAll('[data-action="remove-recipe"]').forEach(btn=>btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      state.ricette.recipes = state.ricette.recipes.filter(r=>r.id!==btn.dataset.id);
+      if(selectedRecipeId===btn.dataset.id) selectedRecipeId=null;
+      renderApp();
+    }));
+    const closeBtn = c.querySelector('[data-action="close-recipe"]');
+    if(closeBtn) closeBtn.addEventListener('click', ()=>{ selectedRecipeId=null; renderApp(); });
+    const scaleInput = document.getElementById('scaleServings');
+    if(scaleInput){ scaleInput.addEventListener('input', renderScaledIngredients); renderScaledIngredients(); }
+    const addBtn = c.querySelector('[data-action="add-recipe"]');
+    if(addBtn) addBtn.addEventListener('click', ()=>{
+      const name = document.getElementById('newRecipeName').value.trim();
+      const servings = parseInt(document.getElementById('newRecipeServings').value,10) || 1;
+      const ingredients = parseIngredientsText(document.getElementById('newRecipeIngredients').value);
+      const steps = document.getElementById('newRecipeSteps').value.trim();
+      if(!name || !ingredients.length){ showToast('Inserisci nome e almeno un ingrediente'); return; }
+      state.ricette.recipes.push({id:uid(), name, servings, ingredients, steps});
+      renderApp();
+      showToast('Ricetta salvata');
+    });
+  }
+
+  // ================= PRESTITI =================
+  function tplPrestiti(){
+    const loans = state.prestiti.loans;
+    const active = loans.filter(l=>!l.returned).sort((a,b)=>isoTs(a.reminderDate)-isoTs(b.reminderDate));
+    const returned = loans.filter(l=>l.returned);
+
+    const activeHtml = active.length ? active.map(l=>{
+      const overdue = isoTs(l.reminderDate) < isoTs(todayISO());
+      return `
+      <div class="loan-item" style="${overdue?'border:1px solid #f5b5b5;background:#fde2e2;':''}">
+        <div><strong>${escapeHtml(l.item)}</strong> → ${escapeHtml(l.to)}</div>
+        <div style="font-size:0.8rem;color:var(--muted);">Prestato il ${isoToDisplay(l.date)} · Promemoria: ${isoToDisplay(l.reminderDate)}${overdue?' ⏰ è ora di richiederlo!':''}</div>
+        <div class="actions">
+          <button class="btn-deposit" data-action="return-loan" data-id="${l.id}">✓ Restituito</button>
+          <button class="btn-secondary" data-action="remove-loan" data-id="${l.id}">✕ Rimuovi</button>
+        </div>
+      </div>`;
+    }).join('') : '<div class="empty-hint">Nessun prestito attivo.</div>';
+
+    const returnedHtml = returned.map(l=>`
+      <div class="loan-item" style="opacity:0.6;">
+        <div><strong>${escapeHtml(l.item)}</strong> → ${escapeHtml(l.to)} <span style="color:var(--green);">(restituito)</span></div>
+        <button class="remove-x" data-action="remove-loan" data-id="${l.id}">✕</button>
+      </div>`).join('');
+
+    return `
+      <div class="card">
+        <div class="card-head"><h2>📦 Prestiti attivi</h2></div>
+        <div>${activeHtml}</div>
+        <div class="add-member-form">
+          <input type="text" id="newLoanItem" placeholder="Cosa (es. Trapano)">
+          <input type="text" id="newLoanTo" placeholder="A chi (es. Zio Paolo)">
+          <input type="date" id="newLoanDate">
+          <select id="newLoanReminder">
+            <option value="7">Tra 1 settimana</option>
+            <option value="14">Tra 2 settimane</option>
+            <option value="30" selected>Tra 1 mese</option>
+          </select>
+          <button class="btn-deposit" data-action="add-loan">+ Aggiungi</button>
+        </div>
+      </div>
+      ${returned.length ? `<div class="card"><div class="card-head"><h2>✓ Restituiti</h2></div>${returnedHtml}</div>` : ''}`;
+  }
+
+  function bindPrestitiEvents(){
+    const c = document.getElementById('tabContent');
+    const dateInput = document.getElementById('newLoanDate');
+    if(dateInput) dateInput.value = todayISO();
+    const addBtn = c.querySelector('[data-action="add-loan"]');
+    if(addBtn) addBtn.addEventListener('click', ()=>{
+      const item = document.getElementById('newLoanItem').value.trim();
+      const to = document.getElementById('newLoanTo').value.trim();
+      let date = document.getElementById('newLoanDate').value;
+      const days = parseInt(document.getElementById('newLoanReminder').value,10);
+      if(!item || !to){ showToast('Inserisci oggetto e destinatario'); return; }
+      if(!date) date = todayISO();
+      const reminderDate = new Date(isoTs(date) + days*86400000).toISOString().slice(0,10);
+      state.prestiti.loans.push({id:uid(), item, to, date, reminderDate, returned:false});
+      renderApp();
+      showToast('Prestito registrato');
+    });
+    c.querySelectorAll('[data-action="return-loan"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const l = state.prestiti.loans.find(x=>x.id===btn.dataset.id);
+      if(l) l.returned = true;
+      renderApp();
+    }));
+    c.querySelectorAll('[data-action="remove-loan"]').forEach(btn=>btn.addEventListener('click', ()=>{
+      state.prestiti.loans = state.prestiti.loans.filter(x=>x.id!==btn.dataset.id);
+      renderApp();
+    }));
+  }
+
+  // ---------- Save / Load ----------
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = todayISO();
+    a.href = url;
+    a.download = `hub-famiglia-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Dati salvati: controlla la cartella Download');
+  });
+
+  document.getElementById('loadBtn').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try{
+        const data = JSON.parse(evt.target.result);
+        if(!data.salvadanaio && !(data.shared && Array.isArray(data.members))) throw new Error('formato non valido');
+        state = normalizeState(data);
+        selectedRecipeId = null;
+        currentTab = 'salvadanaio';
+        renderApp();
+        showToast('Dati caricati con successo');
+      }catch(err){
+        showToast('File non valido');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  renderApp();
+  initFirebaseSync();
+})();
+</script>
+
+</body>
+</html>
